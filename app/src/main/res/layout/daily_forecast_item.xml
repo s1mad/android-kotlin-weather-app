@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/CardStyle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="10dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingHorizontal="15dp"
+        android:paddingVertical="5dp">
+
+        <TextView
+            android:id="@+id/dayTextView"
+            style="@style/ForecastFontStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="01.01 today"
+            app:layout_constraintBottom_toBottomOf="@+id/conditionImageView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/conditionImageView"
+            tools:ignore="HardcodedText" />
+
+        <ImageView
+            android:id="@+id/conditionImageView"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_sunny_128dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tempTextView"
+            style="@style/ForecastFontStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0°"
+            app:layout_constraintBottom_toBottomOf="@+id/conditionImageView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/conditionImageView"
+            tools:ignore="HardcodedText" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>
