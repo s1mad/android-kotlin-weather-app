@@ -28,7 +28,7 @@
             android:id="@+id/conditionImageView"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:src="@drawable/ic_sunny_128dp"
+            android:src="@drawable/ic_sunny_32dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

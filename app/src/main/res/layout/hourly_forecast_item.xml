@@ -28,7 +28,7 @@
             android:layout_height="64dp"
             android:layout_gravity="center"
             android:layout_marginVertical="10dp"
-            android:src="@drawable/ic_sunny_128dp" />
+            android:src="@drawable/ic_sunny_32dp" />
 
         <TextView
             android:id="@+id/tempTextView"

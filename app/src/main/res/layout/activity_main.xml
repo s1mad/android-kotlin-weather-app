@@ -2,6 +2,7 @@
 <androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipeRefreshLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background_app"
@@ -49,13 +50,14 @@
                 android:layout_width="160dp"
                 android:layout_height="160dp"
                 android:layout_marginTop="50dp"
-                android:src="@drawable/ic_sunny_128dp"
+                android:src="@drawable/ic_sunny_32dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/currentLocationTextView" />
+                app:layout_constraintTop_toBottomOf="@+id/currentLocationTextView"
+                android:importantForAccessibility="no" />
 
             <TextView
-                android:id="@+id/ConditionWeatherTextView"
+                android:id="@+id/conditionWeatherTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
@@ -81,7 +83,7 @@
                 android:textSize="64sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/ConditionWeatherTextView"
+                app:layout_constraintTop_toBottomOf="@+id/conditionWeatherTextView"
                 tools:ignore="HardcodedText" />
 
             <TextView
@@ -110,7 +112,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/minMaxTemperatureTextView"
                 tools:itemCount="24"
-                tools:listitem="@layout/hourly_forecast_item"/>
+                tools:listitem="@layout/hourly_forecast_item" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/dailyForecastRecyclerView"
