@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -26,7 +27,8 @@ class WeatherViewModel : ViewModel() {
     fun getLiveDailyForecastData() = liveDailyForecastData
 
     fun updateLiveData(
-        city: String = "Moscow",
+        cityOrLatAndLong: String = "Moscow",
+        swipeRefreshLayout: SwipeRefreshLayout,
         days: Int = 3,
         aqi: String = "no",
         alerts: String = "no",
@@ -35,7 +37,7 @@ class WeatherViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.Main) {
             val json: JSONObject = async {
                 getJSONObject(
-                    "https://api.weatherapi.com/v1/forecast.json?key=$API_KEY&q=$city&days=$days&aqi=$aqi&alerts=$alerts"
+                    "https://api.weatherapi.com/v1/forecast.json?key=$API_KEY&q=$cityOrLatAndLong&days=$days&aqi=$aqi&alerts=$alerts"
                 )
             }.await()
             liveWeatherData.value = getWeatherModel(json)
