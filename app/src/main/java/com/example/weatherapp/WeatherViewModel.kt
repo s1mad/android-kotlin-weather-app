@@ -1,16 +1,19 @@
 package com.example.weatherapp
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.util.Log
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
+import java.net.UnknownHostException
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -27,23 +30,53 @@ class WeatherViewModel : ViewModel() {
     fun getLiveDailyForecastData() = liveDailyForecastData
 
     fun updateLiveData(
-        cityOrLatAndLong: String = "Moscow",
+        context: Context,
         swipeRefreshLayout: SwipeRefreshLayout,
+        cityOrLatAndLong: String = "Moscow",
         days: Int = 3,
         aqi: String = "no",
         alerts: String = "no",
-        onComplete: () -> Unit = {}
     ) {
         viewModelScope.launch(Dispatchers.Main) {
-            val json: JSONObject = async {
-                getJSONObject(
+            val result: Result<JSONObject> = try {
+                val json = getJSONObject(
                     "https://api.weatherapi.com/v1/forecast.json?key=$API_KEY&q=$cityOrLatAndLong&days=$days&aqi=$aqi&alerts=$alerts"
                 )
-            }.await()
-            liveWeatherData.value = getWeatherModel(json)
-            liveHourlyForecastData.value = getHourlyForecastModel(json)
-            liveDailyForecastData.value = getDailyForecastModel(json)
-            onComplete()
+                Result.success(json)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+
+            result.onSuccess { json ->
+                liveWeatherData.value = getWeatherModel(json)
+                liveHourlyForecastData.value = getHourlyForecastModel(json)
+                liveDailyForecastData.value = getDailyForecastModel(json)
+
+                swipeRefreshLayout.isRefreshing = false
+
+                saveWeatherModelToSharedPreferences(context, json.toString())
+            }
+
+            result.onFailure { e ->
+                if (e is UnknownHostException) {
+                    AlertDialog
+                        .Builder(context)
+                        .setTitle("Network Error")
+                        .setMessage(e.message)
+                        .setPositiveButton("Continue") { dialog, _ ->
+                            dialog.cancel()
+                        }.show()
+                    swipeRefreshLayout.isRefreshing = false
+                } else {
+                    AlertDialog.Builder(context)
+                        .setTitle("Error")
+                        .setMessage(e.message)
+                        .setPositiveButton("Continue") { dialog, _ ->
+                            dialog.cancel()
+                        }.show()
+                    swipeRefreshLayout.isRefreshing = false
+                }
+            }
         }
     }
 
@@ -58,11 +91,15 @@ class WeatherViewModel : ViewModel() {
         json
             .getJSONObject("current")
             .getString("temp_c")
-            .dropLast(2) + "°",
-        json
-            .getJSONObject("current")
-            .getJSONObject("condition")
-            .getString("text"),
+            .substringBefore(".") + "°",
+        getCurrentCondition(
+            json
+                .getJSONObject("current")
+                .getJSONObject("condition"),
+            json
+                .getJSONObject("current")
+                .getString("is_day") == "1"
+        ),
         getCurrentConditionIcon(
             json
                 .getJSONObject("current")
@@ -77,14 +114,14 @@ class WeatherViewModel : ViewModel() {
             .getJSONObject(0)
             .getJSONObject("day")
             .getString("mintemp_c")
-            .dropLast(2) + "°",
+            .substringBefore(".") + "°",
         json
             .getJSONObject("forecast")
             .getJSONArray("forecastday")
             .getJSONObject(0)
             .getJSONObject("day")
             .getString("maxtemp_c")
-            .dropLast(2) + "°"
+            .substringBefore(".") + "°"
     )
 
 
@@ -110,6 +147,59 @@ class WeatherViewModel : ViewModel() {
 
         return dataFormat.format(difference)
     }
+
+    private fun getCurrentCondition(json: JSONObject, isDay: Boolean = true): Int =
+        when (json.getString("code").toInt()) {
+            1000 -> if (isDay) R.string.condition_sunny else R.string.condition_clear
+            1003 -> R.string.condition_partly_cloudy
+            1006 -> R.string.condition_cloudy
+            1009 -> R.string.condition_overcast
+            1030 -> R.string.condition_mist
+            1063 -> R.string.condition_patchy_rain_nearby
+            1066 -> R.string.condition_patchy_snow_nearby
+            1069 -> R.string.condition_patchy_sleet_nearby
+            1072 -> R.string.condition_patchy_freezing_drizzle_nearby
+            1087 -> R.string.condition_thundery_outbreaks_in_nearby
+            1114 -> R.string.condition_blowing_snow
+            1117 -> R.string.condition_blizzard
+            1135 -> R.string.condition_fog
+            1147 -> R.string.condition_freezing_fog
+            1150 -> R.string.condition_patchy_light_drizzle
+            1153 -> R.string.condition_light_drizzle
+            1168 -> R.string.condition_freezing_drizzle
+            1171 -> R.string.condition_heavy_freezing_drizzle
+            1180 -> R.string.condition_patchy_light_rain
+            1183 -> R.string.condition_light_rain
+            1186 -> R.string.condition_moderate_rain_at_times
+            1189 -> R.string.condition_moderate_rain
+            1192 -> R.string.condition_heavy_rain_at_times
+            1195 -> R.string.condition_heavy_rain
+            1198 -> R.string.condition_light_freezing_rain
+            1201 -> R.string.condition_moderate_or_heavy_freezing_rain
+            1204 -> R.string.condition_light_sleet
+            1207 -> R.string.condition_moderate_or_heavy_sleet
+            1210 -> R.string.condition_patchy_light_snow
+            1213 -> R.string.condition_light_snow
+            1216 -> R.string.condition_patchy_moderate_snow
+            1219 -> R.string.condition_moderate_snow
+            1222 -> R.string.condition_patchy_heavy_snow
+            1225 -> R.string.condition_heavy_snow
+            1237 -> R.string.condition_ice_pellets
+            1240 -> R.string.condition_light_rain_shower
+            1243 -> R.string.condition_moderate_or_heavy_rain_shower
+            1246 -> R.string.condition_torrential_rain_shower
+            1249 -> R.string.condition_light_sleet_showers
+            1252 -> R.string.condition_moderate_or_heavy_sleet_showers
+            1255 -> R.string.condition_light_snow_showers
+            1258 -> R.string.condition_moderate_or_heavy_snow_showers
+            1261 -> R.string.condition_light_showers_of_ice_pellets
+            1264 -> R.string.condition_moderate_or_heavy_showers_of_ice_pellets
+            1273 -> R.string.condition_patchy_light_rain_in_area_with_thunder
+            1276 -> R.string.condition_moderate_or_heavy_rain_in_area_with_thunder
+            1279 -> R.string.condition_patchy_light_snow_in_area_with_thunder
+            1282 -> R.string.condition_moderate_or_heavy_snow_in_area_with_thunder
+            else -> R.string.condition_sunny
+        }
 
     private fun getCurrentConditionIcon(json: JSONObject, isDay: Boolean = true): Int =
         when (json.getString("code").toInt()) {
@@ -173,7 +263,7 @@ class WeatherViewModel : ViewModel() {
                         .getJSONArray("hour")
                         .getJSONObject(currentHour)
                         .getString("temp_c")
-                        .dropLast(2) + "°"
+                        .substringBefore(".") + "°"
                 )
             )
         }
@@ -204,17 +294,41 @@ class WeatherViewModel : ViewModel() {
                         .getJSONObject(index)
                         .getJSONObject("day")
                         .getString("mintemp_c")
-                        .dropLast(2) + "°",
+                        .substringBefore(".") + "°",
                     json
                         .getJSONObject("forecast")
                         .getJSONArray("forecastday")
                         .getJSONObject(index)
                         .getJSONObject("day")
                         .getString("maxtemp_c")
-                        .dropLast(2) + "°"
+                        .substringBefore(".") + "°"
                 )
             )
         }
         return dailyForecastModel.toList()
+    }
+
+    private fun saveWeatherModelToSharedPreferences(context: Context, json: String) {
+        val sharedPreferences = context.getSharedPreferences("WeatherData", Context.MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        editor.apply {
+            putString("WeatherModel", json)
+            apply()
+        }
+    }
+
+    fun retrieveWeatherModelFromSharedPreferences(context: Context) {
+        val sharedPreferences = context.getSharedPreferences("WeatherData", Context.MODE_PRIVATE)
+        try {
+            sharedPreferences.getString("WeatherModel", null)?.let {
+                val pastJSON = JSONObject(it)
+                liveWeatherData.value = getWeatherModel(pastJSON)
+                liveHourlyForecastData.value = getHourlyForecastModel(pastJSON)
+                liveDailyForecastData.value = getDailyForecastModel(pastJSON)
+            }
+        } catch (e: Exception) {
+            Log.e("Error", e.message.toString())
+        }
+
     }
 }

@@ -12,7 +12,6 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -46,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         viewModel = ViewModelProvider(this)[WeatherViewModel::class.java]
+        viewModel.retrieveWeatherModelFromSharedPreferences(this)
 
         checkAndUpdateLiveData(this)
 
@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             with(binding) {
                 currentLocationTextView.text = it.city
                 lastUpdateTimeTextView.text = it.lastUpdated.takeLast(5)
-                conditionWeatherTextView.text = it.currentCondition
+                conditionWeatherTextView.setText(it.currentCondition)
                 weatherIconImageView.setImageResource(it.currentConditionIcon)
                 currentTemperatureTextView.text = it.currentTemp
                 minMaxTemperatureTextView.text = "${it.minTemp}/${it.maxTemp}"
@@ -126,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     else -> {
-                        viewModel.updateLiveData(it, binding.swipeRefreshLayout)
+                        viewModel.updateLiveData(this, binding.swipeRefreshLayout, it)
                     }
                 }
             }
